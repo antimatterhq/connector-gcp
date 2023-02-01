@@ -1,0 +1,82 @@
+#!/bin/bash
+
+
+if [ -z "$1" ]
+then
+  echo "usage:"
+  echo "  antimatter pair <pairing code>"
+  echo "  antimatter encrypt-credentials <credentials.json>"
+  echo "  antimatter connect"
+  exit 1
+fi
+
+#GMP=./resources/gomplate_linux-amd64-slim
+GMP=gomplate
+SAAS_COMPANY=${SAAS_COMPANY:=contoso1}
+export SAAS_COMPANY
+export SAAS_COMPANY_LOWER=$(echo "${SAAS_COMPANY}" | tr '[:upper:]' '[:lower:]')
+
+if [ "$1" = "pair-interactive" ]
+then
+  pairingcode="$2"
+  # hardcoded for now
+  export AM_GCP_PROJECT=$(gcloud config list --format 'value(core.project)' 2>/dev/null)
+  ${GMP} \
+    --context saasvendor=env:SAAS_COMPANY \
+    --context project=env:AM_GCP_PROJECT \
+    -f resources/interactive.template \
+    -o pair-interactive.md
+  cloudshell launch-tutorial pair-interactive.md
+fi
+
+if [ "$1" = "pair" ]
+then
+  # hardcoded for now
+  export AM_GCP_PROJECT=$(gcloud config list --format 'value(core.project)' 2>/dev/null)
+  set -ex
+  gcloud kms keyrings create antimatter-${SAAS_COMPANY_LOWER} --location us-central1
+  gcloud kms keys create root-key --keyring antimatter-${SAAS_COMPANY_LOWER} --purpose "encryption" --location us-central1
+  gcloud iam service-accounts create antimatter-${SAAS_COMPANY_LOWER}-keyaccess \
+    --description "SA used by Antimatter services in ${SAAS_COMPANY} infrastructure to encrypt customer data" \
+    --display-name antimatter-${SAAS_COMPANY_LOWER}-keyaccess
+  gcloud kms keyrings add-iam-policy-binding antimatter-${SAAS_COMPANY_LOWER} \
+      --location us-central1 \
+      --member serviceAccount:antimatter-${SAAS_COMPANY_LOWER}-keyaccess@${AM_GCP_PROJECT}.iam.gserviceaccount.com \
+      --role roles/cloudkms.cryptoKeyEncrypterDecrypter
+  gcloud iam service-accounts keys create sa_credentials.json \
+      --iam-account=antimatter-${SAAS_COMPANY_LOWER}-keyaccess@${AM_GCP_PROJECT}.iam.gserviceaccount.com
+  ./antimatter encrypt-credentials sa_credentials.json
+  set +ex
+  echo "Resource creation complete"
+  echo "Pairing complete"
+fi
+
+if [ "$1" = "encrypt-credentials" ]
+then
+  if [ -z "$2" ]
+  then
+    echo "usage:"
+    echo "antimatter encrypt-credentials <credfile>"
+    exit 1
+  fi
+
+  gpgtemp="$(mktemp -d gpgtemp.XXXXXXXXXX)"
+  gpg --homedir "$gpgtemp/.gnupg" import <<EOF
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mDMEY9reWBYJKwYBBAHaRw8BAQdA7ieaVh7/0faYtpL+DIgJaHCreXskcEbtCKYn
+JIw2Rv60NkFudGltYXR0ZXIgSFNNIFNlcnZpY2UgPGhzbS12MUBzZXJ2aWNlcy5h
+bnRpbWF0dGVyLmlvPoiZBBMWCgBBFiEE3/Q56WyiOUMfNnVvOQKA9ox7o94FAmPa
+3lgCGwMFCQHhM4AFCwkIBwICIgIGFQoJCAsCBBYCAwECHgcCF4AACgkQOQKA9ox7
+o94PZwEAvph21O2ewhig7l1bVUaAP29Ha/prlJFyplqwEqJv4W8A/10tHWn6xOcP
+q2g99RRby2PMtpC0cnkSk3OLCpZOJoEPuDgEY9reWBIKKwYBBAGXVQEFAQEHQLht
+Y+MuVYABQLFbDiLQpghwtzgVYyy09VqRDZt8H+hlAwEIB4h+BBgWCgAmFiEE3/Q5
+6WyiOUMfNnVvOQKA9ox7o94FAmPa3lgCGwwFCQHhM4AACgkQOQKA9ox7o95YlAEA
+rPd2sXj7oflRStj/9GodjZGZNawRETx9EuX/7nkxXt0BALZ/VZg2gGAz4frDHxpH
+Zs+88vqV2ZoxWJFG492cPCgK
+=QPbF
+-----END PGP PUBLIC KEY BLOCK-----
+EOF
+  gpg --homedir "$gpgtemp/.gnupg" encrypt -r hsm-v1@services.antimatter.io -o sa_creds.encrypted <$(cat $2)
+  rm "$gpgtemp" -rf
+fi

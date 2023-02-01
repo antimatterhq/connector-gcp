@@ -1,0 +1,2 @@
+c[34;1mANTIMATTER GCP CONNECTOR v0.1[0m
+Follow instructions panel to begin
