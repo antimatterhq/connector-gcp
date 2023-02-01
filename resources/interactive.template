@@ -11,12 +11,18 @@ Click the **Start** button to begin.
 
 First, we need to create a keyring and key specific to data encrypted in the {{ .saasvendor }} product.
 
-```bash
-gcloud kms keyrings create antimatter-{{ strings.ToLower .saasvendor }} --location us-central1
+```sh
+gcloud kms keyrings create \
+    antimatter-{{ strings.ToLower .saasvendor }} \
+    --location us-central1
 ```
 
-```bash
-gcloud kms keys create root-key --keyring antimatter-{{ strings.ToLower .saasvendor }} --purpose "encryption" --location us-central1
+```sh
+gcloud kms keys create \
+    root-key \
+    --keyring antimatter-{{ strings.ToLower .saasvendor }} \
+    --purpose "encryption" \
+    --location us-central1
 ```
 
 
@@ -26,17 +32,19 @@ gcloud kms keys create root-key --keyring antimatter-{{ strings.ToLower .saasven
 that the Antimatter service, running inside {{ .saasvendor }} infrastructure, can use to access the key we just
 created.
 
-```bash
-gcloud iam service-accounts create antimatter-{{ strings.ToLower .saasvendor }}-keyaccess \
-  --description "SA used by Antimatter services in {{ .saasvendor }} infrastructure to encrypt customer data" \
+```sh
+gcloud iam service-accounts create \
+    antimatter-{{ strings.ToLower .saasvendor }}-keyaccess \
+  --description "SA used by Antimatter services in {{ .saasvendor }} \
   --display-name antimatter-{{ strings.ToLower .saasvendor }}-keyaccess
 ```
 
 Note that this service account has no default permissions, and can do nothing inside your account. We must grant
 it the ability to encrypt and decrypt using the keyring we just created.
 
-```bash
-gcloud kms keyrings add-iam-policy-binding antimatter-{{ strings.ToLower .saasvendor }} \
+```sh
+gcloud kms keyrings add-iam-policy-binding \
+    antimatter-{{ strings.ToLower .saasvendor }} \
     --location us-central1 \
     --member serviceAccount:antimatter-{{ strings.ToLower .saasvendor }}-keyaccess@{{ .project }}.iam.gserviceaccount.com \
     --role roles/cloudkms.cryptoKeyEncrypterDecrypter
@@ -44,9 +52,13 @@ gcloud kms keyrings add-iam-policy-binding antimatter-{{ strings.ToLower .saasve
 
 Finally, we need to create a service account key for this role, and encrypt it.
 
-```bash
-gcloud iam service-accounts keys create sa_credentials.json \
+```sh
+gcloud iam service-accounts keys create \
+    sa_credentials.json \
     --iam-account=antimatter-{{ strings.ToLower .saasvendor }}-keyaccess@{{ .project }}.iam.gserviceaccount.com
+```
+
+```sh
 ./antimatter encrypt-credentials sa_credentials.json
 ```
 
@@ -55,7 +67,7 @@ gcloud iam service-accounts keys create sa_credentials.json \
 To send the (encrypted) service account credentials to the Antimatter services in {{ .saasvendor }} infrastructure
 and test the pairing, run:
 
-```
+```sh
 ./antimatter connect
 ```
 

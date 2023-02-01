@@ -11,11 +11,11 @@ Click the **Start** button to move to the next step.
 
 ## Configuring the project
 
-Ensure you are in the project you wish to create the key in. This can be done with
+Ensure you are in the project you wish to create the key in.
 
 <walkthrough-project-setup></walkthrough-project-setup>
 
-You will also need to enable the Cloud KMS API, if it is not already enabled:
+You will also need to enable the Cloud KMS APIs
 
 <walkthrough-enable-apis apis="cloudkms.googleapis.com"></walkthrough-enable-apis>
 
@@ -23,13 +23,13 @@ You will also need to enable the Cloud KMS API, if it is not already enabled:
 
 After you have selected a project, you can run the following command to automatically create a keyring, key and service account: 
 
-```
+```sh
 ./antimatter pair [PAIRING CODE]
 ```
 
 If you would like to walk through the steps interactively and run the gcloud commands yourself, you can run this
 command to begin the process:
 
-```
+```sh
 ./antimatter pair-interactive [PAIRING CODE]
 ```
