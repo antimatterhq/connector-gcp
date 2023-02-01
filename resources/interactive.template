@@ -34,9 +34,9 @@ created.
 
 ```sh
 gcloud iam service-accounts create \
-    antimatter-{{ strings.ToLower .saasvendor }}-keyaccess \
+    antimatter-{{ strings.ToLower .saasvendor }} \
   --description "SA used by Antimatter services in {{ .saasvendor }} \
-  --display-name antimatter-{{ strings.ToLower .saasvendor }}-keyaccess
+  --display-name antimatter-{{ strings.ToLower .saasvendor }}
 ```
 
 Note that this service account has no default permissions, and can do nothing inside your account. We must grant
@@ -46,7 +46,7 @@ it the ability to encrypt and decrypt using the keyring we just created.
 gcloud kms keyrings add-iam-policy-binding \
     antimatter-{{ strings.ToLower .saasvendor }} \
     --location us-central1 \
-    --member serviceAccount:antimatter-{{ strings.ToLower .saasvendor }}-keyaccess@{{ .project }}.iam.gserviceaccount.com \
+    --member serviceAccount:antimatter-{{ strings.ToLower .saasvendor }}@{{ .project }}.iam.gserviceaccount.com \
     --role roles/cloudkms.cryptoKeyEncrypterDecrypter
 ```
 
@@ -55,7 +55,7 @@ Finally, we need to create a service account key for this role, and encrypt it.
 ```sh
 gcloud iam service-accounts keys create \
     sa_credentials.json \
-    --iam-account=antimatter-{{ strings.ToLower .saasvendor }}-keyaccess@{{ .project }}.iam.gserviceaccount.com
+    --iam-account=antimatter-{{ strings.ToLower .saasvendor }}@{{ .project }}.iam.gserviceaccount.com
 ```
 
 ```sh
