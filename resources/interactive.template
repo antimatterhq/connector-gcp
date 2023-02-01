@@ -28,14 +28,13 @@ gcloud kms keys create \
 
 ## Creating a Service Account
 
-{{ .saasvendor }} is using Antimatter to manage customer data encryption. We need to create a service account
-that the Antimatter service, running inside {{ .saasvendor }} infrastructure, can use to access the key we just
+We need to create a service account
+that the Antimatter services, running inside {{ .saasvendor }} infrastructure, can use to access the keyring we just
 created.
 
 ```sh
-gcloud iam service-accounts create \
-    antimatter-{{ strings.ToLower .saasvendor }} \
-  --description "SA used by Antimatter services in {{ .saasvendor }} \
+gcloud iam service-accounts \
+    create antimatter-{{ strings.ToLower .saasvendor }} \
   --display-name antimatter-{{ strings.ToLower .saasvendor }}
 ```
 
@@ -43,14 +42,17 @@ Note that this service account has no default permissions, and can do nothing in
 it the ability to encrypt and decrypt using the keyring we just created.
 
 ```sh
-gcloud kms keyrings add-iam-policy-binding \
+gcloud kms keyrings \
+    add-iam-policy-binding \
     antimatter-{{ strings.ToLower .saasvendor }} \
     --location us-central1 \
     --member serviceAccount:antimatter-{{ strings.ToLower .saasvendor }}@{{ .project }}.iam.gserviceaccount.com \
     --role roles/cloudkms.cryptoKeyEncrypterDecrypter
 ```
 
-Finally, we need to create a service account key for this role, and encrypt it.
+## Connecting the service account
+
+We need to create a service account key for this role:
 
 ```sh
 gcloud iam service-accounts keys create \
@@ -58,9 +60,13 @@ gcloud iam service-accounts keys create \
     --iam-account=antimatter-{{ strings.ToLower .saasvendor }}@{{ .project }}.iam.gserviceaccount.com
 ```
 
+We then need to encrypt these credentials so that they can only be read in a secure environment:
+
 ```sh
 ./antimatter encrypt-credentials sa_credentials.json
 ```
+
+Note that this command deletes the original, unencrypted credentials.
 
 ## Test the connection
 
@@ -71,3 +77,10 @@ and test the pairing, run:
 ./antimatter connect
 ```
 
+## Congratulations
+
+<walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
+
+You’re all set!
+
+You can return to the Antimatter "Enable Encryption" screen where you clicked this Cloud Shell button
