@@ -33,3 +33,11 @@ command to begin the process:
 ```sh
 ./antimatter pair-interactive [PAIRING CODE]
 ```
+
+## Congratulations
+
+<walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
+
+You’re all set!
+
+You can return to the Antimatter "Enable Encryption" screen where you clicked this Cloud Shell button
