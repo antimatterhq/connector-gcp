@@ -12,7 +12,7 @@ fi
 
 GMP=./resources/gomplate_linux-amd64-slim
 #GMP=gomplate
-SAAS_COMPANY=${SAAS_COMPANY:=FooBar}
+SAAS_COMPANY=${SAAS_COMPANY:=Ironclad}
 export SAAS_COMPANY
 export SAAS_COMPANY_LOWER=$(echo "${SAAS_COMPANY}" | tr '[:upper:]' '[:lower:]')
 
