@@ -12,7 +12,7 @@ fi
 
 GMP=./resources/gomplate_linux-amd64-slim
 #GMP=gomplate
-SAAS_COMPANY=${SAAS_COMPANY:=Ironclad}
+SAAS_COMPANY=${SAAS_COMPANY:=FooBar}
 export SAAS_COMPANY
 export SAAS_COMPANY_LOWER=$(echo "${SAAS_COMPANY}" | tr '[:upper:]' '[:lower:]')
 
@@ -45,9 +45,10 @@ then
       --role roles/cloudkms.cryptoKeyEncrypterDecrypter
   gcloud iam service-accounts keys create sa_credentials.json \
       --iam-account=antimatter-${SAAS_COMPANY_LOWER}@${AM_GCP_PROJECT}.iam.gserviceaccount.com
-  ./antimatter encrypt-credentials sa_credentials.json
   set +ex
+  ./antimatter encrypt-credentials sa_credentials.json
   echo "Resource creation complete"
+  ./antimatter connect
   echo "Pairing complete"
 fi
 
@@ -81,9 +82,6 @@ EOF
   cat "$2" | gpg --encrypt --trust-model always -r hsm-v1@services.antimatter.io -o sa_creds.encrypted
   echo "Credentials encrypted. Deleting original file"
   rm $2
-  echo "Testing connection to ${SAAS_COMPANY}"
-  sleep 3
-  echo -e "\033[1;32mPairing successful\033[0m"
 fi
 
 if [ "$1" = "connect" ]
