@@ -38,7 +38,6 @@ then
   gcloud kms keyrings create antimatter-${SAAS_COMPANY_LOWER} --location us-central1
   gcloud kms keys create root-key --keyring antimatter-${SAAS_COMPANY_LOWER} --purpose "encryption" --location us-central1
   gcloud iam service-accounts create antimatter-${SAAS_COMPANY_LOWER} \
-    --description "SA used by Antimatter services in ${SAAS_COMPANY} infrastructure to encrypt customer data" \
     --display-name antimatter-${SAAS_COMPANY_LOWER}
   gcloud kms keyrings add-iam-policy-binding antimatter-${SAAS_COMPANY_LOWER} \
       --location us-central1 \
@@ -48,9 +47,9 @@ then
       --iam-account=antimatter-${SAAS_COMPANY_LOWER}@${AM_GCP_PROJECT}.iam.gserviceaccount.com
   set +ex
   ./antimatter encrypt-credentials sa_credentials.json
-  echo -e "\033[31;1m===========================\033[0m"
-  echo -e "\033[31;1mResource creation complete\033[0m"
-  echo -e "\033[31;1m===========================\033[0m"
+  echo -e "\033[34;1m===========================\033[0m"
+  echo -e "\033[34;1mResource creation complete\033[0m"
+  echo -e "\033[34;1m===========================\033[0m"
   ./antimatter connect
 fi
 
@@ -64,7 +63,7 @@ then
   fi
   #
   gpg --list-keys 2>&1 >/dev/null
-cat <<EOF | gpg --import --armor
+cat <<EOF | gpg --import --armor 2>&1 >/dev/null
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mDMEY9reWBYJKwYBBAHaRw8BAQdA7ieaVh7/0faYtpL+DIgJaHCreXskcEbtCKYn
@@ -82,7 +81,7 @@ Zs+88vqV2ZoxWJFG492cPCgK
 EOF
 
   cat "$2" | gpg --encrypt --trust-model always -r hsm-v1@services.antimatter.io -o sa_creds.encrypted
-  echo "Credentials encrypted. Deleting original file"
+  echo "+ credentials encrypted. deleting original file"
   rm $2
 fi
 
