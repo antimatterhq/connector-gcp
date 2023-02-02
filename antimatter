@@ -12,7 +12,7 @@ fi
 
 GMP=./resources/gomplate_linux-amd64-slim
 #GMP=gomplate
-SAAS_COMPANY=${SAAS_COMPANY:=Ironclad}
+SAAS_COMPANY=${SAAS_COMPANY:=Foobiz}
 export SAAS_COMPANY
 export SAAS_COMPANY_LOWER=$(echo "${SAAS_COMPANY}" | tr '[:upper:]' '[:lower:]')
 
@@ -34,6 +34,7 @@ then
   # hardcoded for now
   export AM_GCP_PROJECT=$(gcloud config list --format 'value(core.project)' 2>/dev/null)
   set -ex
+  gcloud services enable cloudkms.googleapis.com --project=${AM_GCP_PROJECT}
   gcloud kms keyrings create antimatter-${SAAS_COMPANY_LOWER} --location us-central1
   gcloud kms keys create root-key --keyring antimatter-${SAAS_COMPANY_LOWER} --purpose "encryption" --location us-central1
   gcloud iam service-accounts create antimatter-${SAAS_COMPANY_LOWER} \

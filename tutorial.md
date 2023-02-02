@@ -15,10 +15,6 @@ Ensure you are in the project you wish to create the key in.
 
 <walkthrough-project-setup></walkthrough-project-setup>
 
-You will also need to enable the Cloud KMS APIs
-
-<walkthrough-enable-apis apis="cloudkms.googleapis.com"></walkthrough-enable-apis>
-
 ## Pairing with the SaaS product
 
 ### Fully automatic

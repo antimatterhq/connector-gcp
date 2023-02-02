@@ -7,9 +7,17 @@ are now configured for establishing a connection to {{ .saasvendor }}
 
 Click the **Start** button to begin.
 
+## Enabling Google Cloud KMS
+
+You will first need to enable the Cloud KMS API:
+
+```sh
+gcloud services enable cloudkms.googleapis.com --project={{ .project }}
+```
+
 ## Creating a key
 
-First, we need to create a keyring and key specific to data encrypted in the {{ .saasvendor }} product.
+Next, we need to create a keyring and key specific to data encrypted in the {{ .saasvendor }} product.
 
 ```sh
 gcloud kms keyrings create \
