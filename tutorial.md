@@ -21,11 +21,14 @@ You will also need to enable the Cloud KMS APIs
 
 ## Pairing with the SaaS product
 
+### Fully automatic
 After you have selected a project, you can run the following command to automatically create a keyring, key and service account: 
 
 ```sh
 ./antimatter pair [PAIRING CODE]
 ```
+
+### Interactive
 
 If you would like to walk through the steps interactively and run the gcloud commands yourself, you can run this
 command to begin the process:
