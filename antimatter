@@ -48,9 +48,10 @@ then
       --iam-account=antimatter-${SAAS_COMPANY_LOWER}@${AM_GCP_PROJECT}.iam.gserviceaccount.com
   set +ex
   ./antimatter encrypt-credentials sa_credentials.json
-  echo "Resource creation complete"
+  echo -e "\033[31;1m===========================\033[0m"
+  echo -e "\033[31;1mResource creation complete\033[0m"
+  echo -e "\033[31;1m===========================\033[0m"
   ./antimatter connect
-  echo "Pairing complete"
 fi
 
 if [ "$1" = "encrypt-credentials" ]

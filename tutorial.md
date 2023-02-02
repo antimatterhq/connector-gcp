@@ -18,19 +18,19 @@ Ensure you are in the project you wish to create the key in.
 ## Pairing with the SaaS product
 
 ### Fully automatic
-After you have selected a project, you can run the following command to automatically create a keyring, key and service account: 
+To automatically create a keyring, key and service account in one step, you can run:
 
 ```sh
-./antimatter pair [PAIRING CODE]
+./antimatter pair PAIRING_CODE
 ```
 
 ### Interactive
 
 If you would like to walk through the steps interactively and run the gcloud commands yourself, you can run this
-command to begin the process:
+command to begin a guided walkthrough:
 
 ```sh
-./antimatter pair-interactive [PAIRING CODE]
+./antimatter pair-interactive PAIRING_CODE
 ```
 
 ## Congratulations
