@@ -58,7 +58,7 @@ then
   fi
 
   # load the public key for the Antimatter services on the other end
-  cat pairingPacket | jq -r .publickey | base64 -d | gpg --import
+  cat pairingPacket | jq -r .publickey | gpg --import
   SAAS_COMPANY=$(cat pairingPacket | jq -r .vendorName)
   export SAAS_COMPANY_LOWER=$(echo "${SAAS_COMPANY}" | tr '[:upper:]' '[:lower:]')
   export ENDPOINT=$(cat pairingPacket | jq -r .endpoint)
