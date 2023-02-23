@@ -42,9 +42,10 @@ then
     echo "usage: antimatter pair <project> <pairingCode>"
     exit 1
   fi
-
   export AM_GCP_PROJECT=${project}
   set -x
+  gcloud config set project ${project}
+
   if ! curl --fail https://pair.antimatter.io/v1/pair/${pairingcode} -o pairingPacket
   then
     echo "failed to pair: pairing code invalid?"
@@ -58,7 +59,7 @@ then
   fi
 
   # load the public key for the Antimatter services on the other end
-  cat pairingPacket | jq -r .publickey | gpg --import
+  cat pairingPacket | jq -r .publickey | base64 -d | gpg --import
   SAAS_COMPANY=$(cat pairingPacket | jq -r .vendorName)
   export SAAS_COMPANY_LOWER=$(echo "${SAAS_COMPANY}" | tr '[:upper:]' '[:lower:]')
   export ENDPOINT=$(cat pairingPacket | jq -r .endpoint)
@@ -98,7 +99,7 @@ then
     exit 1
   fi
 
-  cat "$2" | gpg --encrypt --trust-model always -r hsm-v1@services.antimatter.io -o sa_creds.encrypted
+  cat "$2" | gpg --encrypt --trust-model always -r hsm-v1@services.antimatter.io --armor -o sa_creds.encrypted
   echo "+ credentials encrypted. deleting original file"
   rm $2
 fi
@@ -127,7 +128,7 @@ then
   cat <<EOF | curl --fail -X POST \
      --data-binary @- "${ENDPOINT}"
 {
-     "saCreds":"$(base64 < sa_creds.encrypted)"
+     "saCreds":"$(base64 -w0 < sa_creds.encrypted)"
      "keyring":"${KEYRING_NAME}",
      "key":"root-key",
      "project":"${AM_GCP_PROJECT}",
