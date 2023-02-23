@@ -121,14 +121,8 @@ then
   export SAAS_COMPANY_LOWER=$(echo "${SAAS_COMPANY}" | tr '[:upper:]' '[:lower:]')
   export ENDPOINT=$(cat pairingPacket | jq -r .endpoint)
 
+  set -ex
   echo "Testing connection to ${SAAS_COMPANY}"
-  # Todo amend pairing object with challenge code
-
-  if ! curl --fail https://pair.antimatter.io/v1/pair/${pairingcode} -o pairingPacket
-    then
-      echo "failed to pair: pairing code invalid?"
-      exit 1
-    fi
 
   cat <<EOF | curl --fail -X POST \
      --data-binary @- "${ENDPOINT}"
