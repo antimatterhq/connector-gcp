@@ -21,7 +21,7 @@ Ensure you are in the project you wish to create the key in.
 To automatically create a keyring, key and service account in one step, you can run:
 
 ```sh
-./antimatter pair PAIRING_CODE
+./antimatter pair <walkthrough-project-id/> PAIRING_CODE
 ```
 
 ### Interactive
@@ -30,7 +30,7 @@ If you would like to walk through the steps interactively and run the gcloud com
 command to begin a guided walkthrough:
 
 ```sh
-./antimatter pair-interactive PAIRING_CODE
+./antimatter pair-interactive <walkthrough-project-id/> PAIRING_CODE
 ```
 
 ## Congratulations

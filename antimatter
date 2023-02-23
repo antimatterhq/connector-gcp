@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 if [ -z "$1" ]
 then
   echo "usage:"
@@ -32,7 +31,19 @@ fi
 if [ "$1" = "pair" ]
 then
   pairingcode="$2"
-  export AM_GCP_PROJECT=$(gcloud config list --format 'value(core.project)' 2>/dev/null)
+  project="$3"
+  if [ -z "${project}" ]
+  then
+    echo "usage: antimatter pair <project> <pairingCode>"
+    exit 1
+  fi
+  if [ -z "${pairingcode}" ]
+  then
+    echo "usage: antimatter pair <project> <pairingCode>"
+    exit 1
+  fi
+
+  export AM_GCP_PROJECT=${project}
   set -x
   if ! curl --fail https://pair.antimatter.io/v1/pair/${pairingcode} -o pairingPacket
   then
@@ -58,16 +69,18 @@ then
 
   set -ex
   gcloud services enable cloudkms.googleapis.com --project=${AM_GCP_PROJECT}
-  gcloud kms keyrings create ${KEYRING_NAME} --location us-central1
-  gcloud kms keys create root-key --keyring ${KEYRING_NAME} --purpose "encryption" --location us-central1
+  gcloud kms keyrings create ${KEYRING_NAME} --location us-central1 --project=${AM_GCP_PROJECT}
+  gcloud kms keys create root-key --keyring ${KEYRING_NAME} --purpose "encryption" --location us-central1 --project=${AM_GCP_PROJECT}
   gcloud iam service-accounts create ${SA_NAME} \
-    --display-name ${SA_NAME}
+    --display-name ${SA_NAME} --project=${AM_GCP_PROJECT}
   gcloud kms keyrings add-iam-policy-binding ${KEYRING_NAME} \
       --location us-central1 \
       --member serviceAccount:${SA_NAME}@${AM_GCP_PROJECT}.iam.gserviceaccount.com \
-      --role roles/cloudkms.cryptoKeyEncrypterDecrypter
+      --role roles/cloudkms.cryptoKeyEncrypterDecrypter \
+      --project=${AM_GCP_PROJECT}
   gcloud iam service-accounts keys create sa_credentials.json \
-      --iam-account=${SA_NAME}@${AM_GCP_PROJECT}.iam.gserviceaccount.com
+      --iam-account=${SA_NAME}@${AM_GCP_PROJECT}.iam.gserviceaccount.com \
+      --project=${AM_GCP_PROJECT}
   set +ex
   ./antimatter encrypt-credentials sa_credentials.json
   echo -e "\033[34;1m===========================\033[0m"
