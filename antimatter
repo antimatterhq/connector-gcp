@@ -30,8 +30,8 @@ fi
 
 if [ "$1" = "pair" ]
 then
-  pairingcode="$2"
-  project="$3"
+  pairingcode="$3"
+  project="$2"
   if [ -z "${project}" ]
   then
     echo "usage: antimatter pair <project> <pairingCode>"
