@@ -31,20 +31,43 @@ fi
 
 if [ "$1" = "pair" ]
 then
-  # hardcoded for now
+  pairingcode="$2"
   export AM_GCP_PROJECT=$(gcloud config list --format 'value(core.project)' 2>/dev/null)
+  set -x
+  if ! curl --fail https://pair.antimatter.io/v1/pair/${pairingcode} -o pairingPacket
+  then
+    echo "failed to pair: pairing code invalid?"
+    exit 1
+  fi
+  if [ -f ".resourceid" ]; then
+      UNIQUEID=$(cat .resourceid)
+  else
+      UNIQUEID=$(head -c 48 /dev/urandom | base64 | tr -d '+/' | tr '[:upper:]' '[:lower:]' | head -c 12)
+      echo -ne $UNIQUEID > .resourceid
+  fi
+
+  # load the public key for the Antimatter services on the other end
+  cat pairingPacket | jq -r .publickey | base64 -d | gpg --import
+  SAAS_COMPANY=$(cat pairingPacket | jq -r .vendorName)
+  export SAAS_COMPANY_LOWER=$(echo "${SAAS_COMPANY}" | tr '[:upper:]' '[:lower:]')
+  export ENDPOINT=$(cat pairingPacket | jq -r .endpoint)
+
+  # 11 + 32 + 12
+  KEYRING_NAME=antimatter-${SAAS_COMPANY_LOWER:0:32}-${UNIQUEID}
+  SA_NAME=antimatter-${SAAS_COMPANY_LOWER:0:32}-${UNIQUEID}
+
   set -ex
   gcloud services enable cloudkms.googleapis.com --project=${AM_GCP_PROJECT}
-  gcloud kms keyrings create antimatter-${SAAS_COMPANY_LOWER} --location us-central1
-  gcloud kms keys create root-key --keyring antimatter-${SAAS_COMPANY_LOWER} --purpose "encryption" --location us-central1
-  gcloud iam service-accounts create antimatter-${SAAS_COMPANY_LOWER} \
-    --display-name antimatter-${SAAS_COMPANY_LOWER}
-  gcloud kms keyrings add-iam-policy-binding antimatter-${SAAS_COMPANY_LOWER} \
+  gcloud kms keyrings create ${KEYRING_NAME} --location us-central1
+  gcloud kms keys create root-key --keyring ${KEYRING_NAME} --purpose "encryption" --location us-central1
+  gcloud iam service-accounts create ${SA_NAME} \
+    --display-name ${SA_NAME}
+  gcloud kms keyrings add-iam-policy-binding ${KEYRING_NAME} \
       --location us-central1 \
-      --member serviceAccount:antimatter-${SAAS_COMPANY_LOWER}@${AM_GCP_PROJECT}.iam.gserviceaccount.com \
+      --member serviceAccount:${SA_NAME}@${AM_GCP_PROJECT}.iam.gserviceaccount.com \
       --role roles/cloudkms.cryptoKeyEncrypterDecrypter
   gcloud iam service-accounts keys create sa_credentials.json \
-      --iam-account=antimatter-${SAAS_COMPANY_LOWER}@${AM_GCP_PROJECT}.iam.gserviceaccount.com
+      --iam-account=${SA_NAME}@${AM_GCP_PROJECT}.iam.gserviceaccount.com
   set +ex
   ./antimatter encrypt-credentials sa_credentials.json
   echo -e "\033[34;1m===========================\033[0m"
@@ -61,24 +84,6 @@ then
     echo "antimatter encrypt-credentials <credfile>"
     exit 1
   fi
-  #
-  gpg --list-keys 2>&1 >/dev/null
-cat <<EOF | gpg --import --armor 2>&1 >/dev/null
------BEGIN PGP PUBLIC KEY BLOCK-----
-
-mDMEY9reWBYJKwYBBAHaRw8BAQdA7ieaVh7/0faYtpL+DIgJaHCreXskcEbtCKYn
-JIw2Rv60NkFudGltYXR0ZXIgSFNNIFNlcnZpY2UgPGhzbS12MUBzZXJ2aWNlcy5h
-bnRpbWF0dGVyLmlvPoiZBBMWCgBBFiEE3/Q56WyiOUMfNnVvOQKA9ox7o94FAmPa
-3lgCGwMFCQHhM4AFCwkIBwICIgIGFQoJCAsCBBYCAwECHgcCF4AACgkQOQKA9ox7
-o94PZwEAvph21O2ewhig7l1bVUaAP29Ha/prlJFyplqwEqJv4W8A/10tHWn6xOcP
-q2g99RRby2PMtpC0cnkSk3OLCpZOJoEPuDgEY9reWBIKKwYBBAGXVQEFAQEHQLht
-Y+MuVYABQLFbDiLQpghwtzgVYyy09VqRDZt8H+hlAwEIB4h+BBgWCgAmFiEE3/Q5
-6WyiOUMfNnVvOQKA9ox7o94FAmPa3lgCGwwFCQHhM4AACgkQOQKA9ox7o95YlAEA
-rPd2sXj7oflRStj/9GodjZGZNawRETx9EuX/7nkxXt0BALZ/VZg2gGAz4frDHxpH
-Zs+88vqV2ZoxWJFG492cPCgK
-=QPbF
------END PGP PUBLIC KEY BLOCK-----
-EOF
 
   cat "$2" | gpg --encrypt --trust-model always -r hsm-v1@services.antimatter.io -o sa_creds.encrypted
   echo "+ credentials encrypted. deleting original file"
@@ -87,7 +92,46 @@ fi
 
 if [ "$1" = "connect" ]
 then
+  if [ -f ".resourceid" ]; then
+      UNIQUEID=$(cat .resourceid)
+  else
+      echo "you need to run 'pair' or 'pair-interactive' before running 'connect'"
+      exit 1
+  fi
+  # 11 + 32 + 12
+  KEYRING_NAME=antimatter-${SAAS_COMPANY_LOWER:0:32}-${UNIQUEID}
+  SA_NAME=antimatter-${SAAS_COMPANY_LOWER:0:32}-${UNIQUEID}
+  export AM_GCP_PROJECT=$(gcloud config list --format 'value(core.project)' 2>/dev/null)
+
+  cat pairingPacket | jq -r .publickey | base64 -d | gpg --import
+  SAAS_COMPANY=$(cat pairingPacket | jq -r .vendorName)
+  export SAAS_COMPANY_LOWER=$(echo "${SAAS_COMPANY}" | tr '[:upper:]' '[:lower:]')
+  export ENDPOINT=$(cat pairingPacket | jq -r .endpoint)
+
   echo "Testing connection to ${SAAS_COMPANY}"
-  sleep 3
-  echo -e "\033[1;32mPairing successful\033[0m"
+  # Todo amend pairing object with challenge code
+
+  if ! curl --fail https://pair.antimatter.io/v1/pair/${pairingcode} -o pairingPacket
+    then
+      echo "failed to pair: pairing code invalid?"
+      exit 1
+    fi
+
+  cat <<EOF | curl --fail -X POST \
+     --data-binary @- "${ENDPOINT}"
+{
+     "saCreds":"$(base64 < sa_creds.encrypted)"
+     "keyring":"${KEYRING_NAME}",
+     "key":"root-key",
+     "project":"${AM_GCP_PROJECT}",
+     "location":"us-central1"
+}
+EOF
+  if $?
+  then
+    echo -e "\033[1;32mPairing successful\033[0m"
+  else
+    echo "pairing failed"
+  fi
+
 fi
