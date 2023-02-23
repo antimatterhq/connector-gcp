@@ -130,14 +130,14 @@ then
   cat <<EOF | curl --fail -X POST \
      --data-binary @- "${ENDPOINT}"
 {
-     "saCreds":"$(base64 -w0 < sa_creds.encrypted)"
+     "saCreds":"$(base64 -w0 < sa_creds.encrypted)",
      "keyring":"${KEYRING_NAME}",
      "key":"root-key",
      "project":"${AM_GCP_PROJECT}",
      "location":"us-central1"
 }
 EOF
-  if $?
+  if [ "$?" = "0" ]
   then
     echo -e "\033[1;32mPairing successful\033[0m"
   else
