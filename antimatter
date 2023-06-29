@@ -64,9 +64,18 @@ then
   export SAAS_COMPANY_LOWER=$(echo "${SAAS_COMPANY}" | tr '[:upper:]' '[:lower:]')
   export ENDPOINT=$(cat pairingPacket | jq -r .endpoint)
 
-  # 11 + 32 + 12
+  # KEYRING_NAME must be at most 63 characters
+  # antimatter- (11 characters)
+  # ${SAAS_COMPANY_LOWER:0:32} (<=32 characters)
+  # -${UNIQUEID} (13 characters)
+  # total <= 56 characters
   KEYRING_NAME=antimatter-${SAAS_COMPANY_LOWER:0:32}-${UNIQUEID}
-  SA_NAME=antimatter-${SAAS_COMPANY_LOWER:0:32}-${UNIQUEID}
+  # SA_NAME must be between 6 and 30 characters
+  # antimatter- (11 characters)
+  # ${SAAS_COMPANY_LOWER:0:6} (<=6 characters)
+  # -${UNIQUEID} (13 characters)
+  # total <= 30 characters
+  SA_NAME=antimatter-${SAAS_COMPANY_LOWER:0:6}-${UNIQUEID}
 
   set -ex
   gcloud services enable cloudkms.googleapis.com --project=${AM_GCP_PROJECT}
