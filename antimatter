@@ -46,7 +46,7 @@ then
   set -x
   gcloud config set project ${project}
 
-  if ! curl --fail https://pair.antimatter.io/v1/pair/${pairingcode} -o pairingPacket
+  if ! curl --fail https://cloud.dev.antimatter.io/v1/pair/${pairingcode} -o pairingPacket
   then
     echo "failed to pair: pairing code invalid?"
     exit 1
